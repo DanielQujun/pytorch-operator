@@ -96,6 +96,10 @@ def main():
                         help='For Saving the current Model')
     parser.add_argument('--dir', default='logs', metavar='L',
                         help='directory where summary logs are stored')
+    parser.add_argument('--model-dir', default='/model', type=str,
+                        help='directory where model are stored')
+    parser.add_argument('--data-dir', default='/opt/mnist/data', type=str,
+                        help='directory where data are stored')
     if dist.is_available():
         parser.add_argument('--backend', type=str, help='Distributed backend',
                             choices=[dist.Backend.GLOO, dist.Backend.NCCL, dist.Backend.MPI],
@@ -117,14 +121,14 @@ def main():
 
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     train_loader = torch.utils.data.DataLoader(
-        datasets.FashionMNIST('../data', train=True, download=True,
+        datasets.FashionMNIST(args.data_dir, train=True, download=False,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ])),
         batch_size=args.batch_size, shuffle=True, **kwargs)
     test_loader = torch.utils.data.DataLoader(
-        datasets.FashionMNIST('../data', train=False, transform=transforms.Compose([
+        datasets.FashionMNIST(args.data_dir, train=False, download=False, transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ])),
@@ -144,7 +148,7 @@ def main():
         test(args, model, device, test_loader, writer, epoch)
 
     if (args.save_model):
-        torch.save(model.state_dict(),"mnist_cnn.pt")
+        torch.save(model.state_dict(),os.path.join(args.model_dir, "mnist_cnn.pt"))
         
 if __name__ == '__main__':
     main()
